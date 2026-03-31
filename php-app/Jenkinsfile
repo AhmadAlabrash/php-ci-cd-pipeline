@@ -1,0 +1,143 @@
+pipeline {
+    agent any
+
+    environment {
+        AWS_ACCOUNT_ID   = '612990353866'
+        AWS_REGION       = 'eu-central-1'
+        ECR_REPO         = 'php-app'
+        IMAGE_TAG        = "${BUILD_NUMBER}"
+        IMAGE_REPO       = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO}"
+        IMAGE_URI        = "${IMAGE_REPO}:${IMAGE_TAG}"
+
+        SONARQUBE_ENV    = 'sonarqube-server'
+        EKS_CLUSTER_NAME = 'funny-grunge-crow'
+        HELM_RELEASE     = 'php-app'
+        K8S_NAMESPACE    = 'default'
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                dir('php-app') {
+                    sh '''
+                        composer install
+                    '''
+                }
+            }
+        }
+
+        stage('Run Tests') {
+            steps {
+                dir('php-app') {
+                    sh '''
+                        ./vendor/bin/phpunit tests --testdox
+                    '''
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                dir('php-app') {
+                    withSonarQubeEnv('sonarqube-server') {
+                        sh '''
+                            npx sonar-scanner \
+                              -Dsonar.projectKey=php-app \
+                              -Dsonar.projectName="php-app" \
+                              -Dsonar.sources=src,public \
+                              -Dsonar.tests=tests
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                dir('php-app') {
+                    sh '''
+                        docker build -t ${ECR_REPO}:${IMAGE_TAG} .
+                        docker tag ${ECR_REPO}:${IMAGE_TAG} ${IMAGE_URI}
+                    '''
+                }
+            }
+        }
+
+        stage('Push Docker Image to ECR') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh """
+                        aws sts get-caller-identity
+
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                        docker login --username AWS --password-stdin \
+                        ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com
+
+                        docker push ${IMAGE_URI}
+                    """
+                }
+            }
+        }
+
+        stage('Deploy to EKS with Helm') {
+            steps {
+                withCredentials([[
+                    $class: 'AmazonWebServicesCredentialsBinding',
+                    credentialsId: 'aws-creds'
+                ]]) {
+                    sh """
+                        unset KUBECONFIG
+                        unset KUBERNETES_MASTER
+                        unset KUBE_MASTER
+                        unset HELM_KUBEAPISERVER
+                        unset HELM_KUBETOKEN
+                        unset HELM_KUBECAFILE
+                        unset HELM_KUBEINSECURE_SKIP_TLS_VERIFY
+
+                        aws eks update-kubeconfig --region ${AWS_REGION} --name ${EKS_CLUSTER_NAME}
+
+                        kubectl get nodes
+                        helm lint ./helm/php-app
+
+                        helm upgrade --install ${HELM_RELEASE} ./helm/php-app \
+                          --namespace ${K8S_NAMESPACE} \
+                          --create-namespace \
+                          --set image.repository=${IMAGE_REPO} \
+                          --set image.tag=${IMAGE_TAG} \
+                          --kubeconfig /var/lib/jenkins/.kube/config
+
+                        kubectl get pods -n ${K8S_NAMESPACE}
+                        kubectl get svc -n ${K8S_NAMESPACE}
+                        helm list -n ${K8S_NAMESPACE} --kubeconfig /var/lib/jenkins/.kube/config
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo 'Pipeline completed successfully.'
+        }
+        failure {
+            echo 'Pipeline failed.'
+        }
+    }
+}
