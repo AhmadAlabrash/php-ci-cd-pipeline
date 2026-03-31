@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PHP CI/CD Pipeline Diagram</title>
+  <style>
+    :root {
+      --bg1: #f8fafc;
+      --bg2: #eef2ff;
+      --card: #ffffff;
+      --border: #d6deeb;
+      --text: #1f2937;
+      --muted: #5b6472;
+      --blue: #2563eb;
+      --green: #16a34a;
+      --orange: #ea580c;
+      --purple: #7c3aed;
+      --shadow: 0 14px 35px rgba(15, 23, 42, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--text);
+      background: linear-gradient(180deg, var(--bg1), var(--bg2));
+    }
+
+    .page {
+      max-width: 1450px;
+      margin: 0 auto;
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+    }
+
+    .subtitle {
+      margin: 0 0 26px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .diagram {
+      display: grid;
+      grid-template-columns: 220px 430px 300px 330px;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .panel h2 {
+      margin: 0 0 14px;
+      font-size: 22px;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    .icon-circle {
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      margin: 0 auto 18px;
+      display: grid;
+      place-items: center;
+      font-size: 42px;
+      color: #fff;
+      background: #111827;
+    }
+
+    .small-note {
+      margin-top: 10px;
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    .pipeline-header {
+      margin-bottom: 18px;
+      border: 2px solid #94a3b8;
+      border-radius: 18px;
+      padding: 16px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 24px;
+      background: #f8fafc;
+    }
+
+    .steps {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .step {
+      position: relative;
+      background: var(--blue);
+      color: #fff;
+      border-radius: 12px;
+      padding: 16px 18px;
+      font-weight: 700;
+      text-align: center;
+      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.22);
+    }
+
+    .step.orange {
+      background: var(--orange);
+      box-shadow: 0 8px 18px rgba(234, 88, 12, 0.22);
+    }
+
+    .step.purple {
+      background: var(--purple);
+      box-shadow: 0 8px 18px rgba(124, 58, 237, 0.22);
+    }
+
+    .step.green {
+      background: var(--green);
+      box-shadow: 0 8px 18px rgba(22, 163, 74, 0.22);
+    }
+
+    .step:not(:last-child)::after {
+      content: "↓";
+      position: absolute;
+      left: 50%;
+      bottom: -22px;
+      transform: translateX(-50%);
+      color: #64748b;
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .quality-callout {
+      margin-top: 16px;
+      background: #ecfdf5;
+      border: 1px solid #86efac;
+      color: #166534;
+      border-radius: 14px;
+      padding: 14px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .brand {
+      font-size: 42px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+
+    .service-card {
+      margin-top: 18px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 18px;
+      padding: 20px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .service-card .big {
+      font-size: 25px;
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+
+    .eks-area .cluster {
+      margin-top: 18px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 20px;
+      padding: 18px;
+      background: #f8fafc;
+    }
+
+    .lb {
+      width: 180px;
+      margin: 0 auto 22px;
+      background: #1d4ed8;
+      color: white;
+      border-radius: 999px;
+      padding: 12px 18px;
+      text-align: center;
+      font-weight: 800;
+      box-shadow: 0 10px 18px rgba(29, 78, 216, 0.2);
+    }
+
+    .arrow-text {
+      text-align: center;
+      color: var(--muted);
+      font-size: 14px;
+      margin: 8px 0 14px;
+    }
+
+    .apps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    .app-box {
+      background: white;
+      border: 1px solid #ddd6fe;
+      border-radius: 16px;
+      padding: 16px 10px;
+      text-align: center;
+      font-weight: 700;
+      box-shadow: 0 8px 18px rgba(124, 58, 237, 0.12);
+    }
+
+    .emoji {
+      display: block;
+      font-size: 34px;
+      margin-bottom: 8px;
+    }
+
+    .footer {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    code {
+      background: #eff6ff;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+
+    @media (max-width: 1200px) {
+      .diagram {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>PHP App CI/CD Pipeline Diagram</h1>
+    <p class="subtitle">GitHub → Jenkins → SonarQube → Docker → Amazon ECR → Amazon EKS with Helm</p>
+
+    <div class="diagram">
+      <section class="panel center">
+        <div class="icon-circle">🐙</div>
+        <h2>GitHub</h2>
+        <p>PHP source code lives in <code>php-app/</code>.</p>
+        <div class="small-note">Webhook triggers Jenkins on every push</div>
+      </section>
+
+      <section class="panel">
+        <div class="pipeline-header">Jenkins CI/CD Pipeline</div>
+        <div class="steps">
+          <div class="step">1. Checkout Code</div>
+          <div class="step">2. Install Dependencies<br><small>Composer</small></div>
+          <div class="step">3. Run Tests<br><small>PHPUnit</small></div>
+          <div class="step orange">4. SonarQube Analysis</div>
+          <div class="step orange">5. Quality Gate Check</div>
+          <div class="step purple">6. Build Docker Image</div>
+          <div class="step purple">7. Push Image to ECR</div>
+          <div class="step">8. Deploy to EKS with Helm</div>
+          <div class="step green">9. PHP App Running</div>
+        </div>
+        <div class="quality-callout">Quality Gate Passed ✅</div>
+      </section>
+
+      <section class="panel">
+        <div class="brand">AWS</div>
+        <div class="service-card">
+          <div class="big" style="color: var(--orange);">Amazon ECR</div>
+          <div>Private container registry</div>
+          <div class="small-note">Stores the Docker image built by Jenkins</div>
+        </div>
+        <div class="service-card">
+          <div class="big">SonarQube</div>
+          <div>Static code analysis and code quality checks</div>
+          <div class="small-note">Jenkins waits for webhook result before continuing</div>
+        </div>
+      </section>
+
+      <section class="panel eks-area">
+        <h2>Amazon EKS</h2>
+        <p>Helm deploys the Kubernetes deployment and service for the PHP application.</p>
+        <div class="cluster">
+          <div class="lb">LoadBalancer</div>
+          <div class="arrow-text">External traffic routed to PHP app pods</div>
+          <div class="apps">
+            <div class="app-box"><span class="emoji">🐘</span>PHP App</div>
+            <div class="app-box"><span class="emoji">🐘</span>PHP App</div>
+            <div class="app-box"><span class="emoji">🐘</span>PHP App</div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="footer">
+      Flow summary: a code push to GitHub triggers Jenkins, Jenkins installs Composer dependencies and runs PHPUnit, SonarQube validates code quality, Docker builds the image, ECR stores it, and Helm deploys it to EKS.
+    </div>
+  </div>
+</body>
+</html>
