@@ -4,6 +4,9 @@ This project demonstrates a complete CI/CD pipeline for a PHP application using 
 
 The pipeline automates testing, code quality analysis, containerization, and deployment to Kubernetes.
 
+![Architecture Diagram](diagram/project-diagram.png)
+
+
 ---
 
 ## 🚀 Project Overview
