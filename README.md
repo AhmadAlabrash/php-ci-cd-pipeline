@@ -13,6 +13,15 @@ The pipeline automates testing, code quality analysis, containerization, and dep
 
 This project shows how to build a production-ready CI/CD pipeline for a PHP application.
 
+
+## 🌐 Watch Demo
+
+Watch this project in action:
+
+[![Web App Demo ▶️](https://img.youtube.com/vi/prtCzjSH4dY/maxresdefault.jpg)](https://youtu.be/prtCzjSH4dY)
+
+
+
 Whenever code is pushed to GitHub, Jenkins automatically triggers the pipeline via webhook and performs the following steps:
 
 1. Checkout source code
